@@ -1,0 +1,3 @@
+[submodule "minimongo"]
+	path = minimongo
+	url = https://github.com/larroy/minimongo.git

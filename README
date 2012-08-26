@@ -1,0 +1,13 @@
+OSM to Mongodb compiler
+=======================
+
+This is a framework to process OSM data dumps in PBF format.
+
+There's an included backend to store data in mongodb, to implement a new backend it's very simple, just implement osm.sink which does an action on the processed entities and osm.factory which creates the instances of OSM entitities. Then call the parser with your implementations of sink and factory.
+
+Usage:
+./osm_mongo_compiler.py spain.osm.pbf 
+Loading: spain.osm.pbf
+Counting blobs...  3829.
+Bounding Box: (-9.779014,35.91539) (5.098525,44.14855)
+[      0% 7/3829 blocks. 56 K nodes 2012-08-26 18:58      ]
