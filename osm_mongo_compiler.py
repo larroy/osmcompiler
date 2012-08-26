@@ -59,7 +59,33 @@ class MongoOSMSink(osm.sink.OSMSink):
 
 def main():
     parser = optparse.OptionParser(usage="%prog [options] osm_dump_file", version="%prog 0.2")
-    parser.add_option("-q", "--quiet",action="store_false", dest="verbose", default=True,help="don't print status messages to stdout")
+    parser.add_option(
+        "-q",
+        "--quiet",
+        action = "store_false",
+        dest = "verbose",
+        default = True,
+        help = "don't print status messages to stdout")
+
+    parser.add_option(
+        "-f",
+        "--from",
+        dest = "frm",
+        default = 0,
+        type = 'int',
+        help = "parse from this block onwards")
+
+    parser.add_option(
+        "-c",
+        "--count",
+        dest = "count",
+        default = -1,
+        type = 'int',
+        help = "parse count blocks")
+
+
+
+
     (options, args) = parser.parse_args()
 
     if len(args) != 1 :
@@ -77,7 +103,7 @@ def main():
 
     fpbf = open(pbf_file, "rb")
     parser = osm.compiler.OSMCompiler(fpbf, MongoOSMSink(), MongoOSMFactory(), options.verbose)
-    parser.parse()
+    parser.parse(options.frm, options.count)
     fpbf.close()
 
     if options.verbose:

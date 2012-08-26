@@ -27,16 +27,36 @@ def read_int4(fd):
         return le_int[0]
 
 
+def skip_blobs(fd, N):
+    count = 0
+    blobHeader = fileformat_pb2.BlobHeader()
+    assert(N >= 0)
+    while count < N:
+        blob_size = read_int4(fd)
+        if blob_size <= 0:
+            logging.warn('skipping past the last block')
+            break
+
+        blobHeader.ParseFromString(fd.read(blob_size))
+        data_size = blobHeader.datasize
+        if data_size <= 0:
+            raise RuntimeError('Empty blobs are not allowed')
+        fd.seek(data_size, os.SEEK_CUR)
+        count += 1
 
 def count_blobs(fd):
     count = 0
     blobHeader = fileformat_pb2.BlobHeader()
     while True:
         blob_size = read_int4(fd)
+        if blob_size <= 0:
+            break
+
         blobHeader.ParseFromString(fd.read(blob_size))
         data_size = blobHeader.datasize
+        #print data_size, count
         if data_size <= 0:
-            break
+            raise RuntimeError('Empty blobs are not allowed')
         else:
             fd.seek(data_size, os.SEEK_CUR)
             count += 1
@@ -48,7 +68,8 @@ class OSMCompiler:
 
     NANO = 1000000000L
     def __init__(self, filehandle, OSMSink, OSMFactory, verbose=False):
-        """OSMCompiler constuctor"""
+        """OSMCompiler constuctor
+        """
         self.fpbf = filehandle
         self.verbose = verbose
         self.blobHeader = fileformat_pb2.BlobHeader()
@@ -65,11 +86,10 @@ class OSMCompiler:
             print 'Counting blobs...',
             sys.stdout.flush()
         self.nblobs = count_blobs(self.fpbf)
+        self.ndatablobs = self.nblobs - 1
         if self.verbose:
             print ' {0}.'.format(self.nblobs)
 
-        self.curblob = 1
-        self.pbar = pbar.ProgressBar(0, self.nblobs)
 
         if not self.readBlob():
             return False
@@ -89,11 +109,46 @@ class OSMCompiler:
             maxlon = float(self.hblock.bbox.right) / OSMCompiler.NANO
             print 'Bounding Box: ({0},{1}) ({2},{3})'.format(minlon, minlat, maxlon, maxlat)
 
+    def numDataBlobs(self):
+        '''
+        :returns number of blobs in the file
+        :rtype int
+        '''
+        return self.ndatablobs
 
-    def parse(self):
-        """work through the data extracting OSM objects"""
+    def skipDataBlobs(self, n):
+        '''
+        :param n: number of blobs to skip
+        '''
+        assert(type(n) is int)
+        skip_blobs(self.fpbf, n)
+
+    def parse(self, fromblob=0, count=-1):
+        """work through the data extracting OSM objects
+        :param fromblob: limit processing to data blobs starting fromblob
+        :param count: process this number of data blobs then return
+        :returns None
+        """
+        if count < 0:
+            count = self.ndatablobs - fromblob
+        assert(type(count) is int)
+        assert(count>=0)
+
+        if fromblob:
+            self.skipDataBlobs(fromblob)
+
+        def prog():
+            l = []
+            for (k,v) in self.count.items():
+                l.append('{1} K {0} '.format(k, v // 1000))
+            msg = '{0}/{1} blocks. '.format(nblob, count) + ' '.join(l) + pbar.est_finish(start, count, nblob)
+            progress(nblob, msg)
+
+
+        nblob = 0
+        progress = pbar.ProgressBar(0, count)
         start = datetime.datetime.now()
-        while True:
+        while nblob < count:
             size = self.readNextBlock()
             if not size:
                 break
@@ -108,13 +163,11 @@ class OSMCompiler:
                     self.processRels(pg.relations)
 
             if self.verbose:
-                #print 'Parsed block of {0} Kb. '.format(size//1025),
-                l = []
-                for (k,v) in self.count.items():
-                    l.append('{1} K {0} '.format(k, v // 1000))
-                msg = '{0}/{1} blocks. '.format(self.curblob, self.nblobs) + ' '.join(l) + pbar.est_finish(start, self.nblobs, self.curblob)
-                self.pbar(self.curblob, msg)
-            self.curblob += 1
+                prog()
+            nblob += 1
+
+        prog()
+        print
 
 
 
