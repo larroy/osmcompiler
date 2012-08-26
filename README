@@ -11,3 +11,10 @@ Loading: spain.osm.pbf
 Counting blobs...  3829.
 Bounding Box: (-9.779014,35.91539) (5.098525,44.14855)
 [      0% 7/3829 blocks. 56 K nodes 2012-08-26 18:58      ]
+
+
+
+Credits
+-------
+Feedback welcome to <pedro.larroy.lists@gmail.com> please put [osmcompiler] on the subject or your mails will be probably ignored.
+Based initially on the parsepbf tool by Chris Hill.
