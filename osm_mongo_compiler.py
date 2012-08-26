@@ -60,7 +60,6 @@ class MongoOSMSink(osm.sink.OSMSink):
 def main():
     parser = optparse.OptionParser(usage="%prog [options] osm_dump_file", version="%prog 0.2")
     parser.add_option("-q", "--quiet",action="store_false", dest="verbose", default=True,help="don't print status messages to stdout")
-    parser.add_option("-x", "--xml",action="store", dest="xmlout", default="",help="output xml to this file")
     (options, args) = parser.parse_args()
 
     if len(args) != 1 :
