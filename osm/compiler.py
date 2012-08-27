@@ -83,7 +83,7 @@ class OSMCompiler:
         self.osm_factory = OSMFactory
 
         if self.verbose:
-            print 'Counting blobs...',
+            print 'Counting blobs (this might take a while for big dumps)...',
             sys.stdout.flush()
         self.nblobs = count_blobs(self.fpbf)
         self.ndatablobs = self.nblobs - 1
@@ -107,7 +107,7 @@ class OSMCompiler:
             minlon = float(self.hblock.bbox.left) / OSMCompiler.NANO
             maxlat = float(self.hblock.bbox.top) / OSMCompiler.NANO
             maxlon = float(self.hblock.bbox.right) / OSMCompiler.NANO
-            print 'Bounding Box: ({0},{1}) ({2},{3})'.format(minlon, minlat, maxlon, maxlat)
+            print 'Bounding Box (lat, lon): ({0},{1}) ({2},{3})'.format(minlat, minlon, maxlat, maxlon)
 
     def numDataBlobs(self):
         '''
@@ -138,16 +138,18 @@ class OSMCompiler:
             self.skipDataBlobs(fromblob)
 
         def prog():
-            l = []
-            for (k,v) in self.count.items():
-                l.append('{1} K {0} '.format(k, v // 1000))
-            msg = '{0}/{1} blocks. '.format(nblob, count) + ' '.join(l) + pbar.est_finish(start, count, nblob)
-            progress(nblob, msg)
+                l = []
+                for (k,v) in self.count.items():
+                    l.append('{1} K {0} '.format(k, v // 1000))
+                msg = '{0}/{1} blocks. '.format(nblob, count) + ' '.join(l) + pbar.est_finish(start, count, nblob)
+                progress(nblob, msg)
 
 
         nblob = 0
         progress = pbar.ProgressBar(0, count)
         start = datetime.datetime.now()
+        if self.verbose:
+            prog()
         while nblob < count:
             size = self.readNextBlock()
             if not size:
@@ -162,12 +164,13 @@ class OSMCompiler:
                 if len(pg.relations):
                     self.processRels(pg.relations)
 
+            nblob += 1
             if self.verbose:
                 prog()
-            nblob += 1
 
-        prog()
-        print
+        if self.verbose:
+            prog()
+            print
 
 
 

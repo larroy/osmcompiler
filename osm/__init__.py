@@ -20,7 +20,7 @@ class Node(object):
 
     def __str__(self):
         res = []
-        res.append('Node {0}, ({1}, {2})\n'.format(self._id, self.lat, self.lon))
+        res.append('Node {0}: ({1}, {2})\n'.format(self._id, self.lat, self.lon))
         for t in self.tags.keys():
             res.append('\t{0} = {1}\n'.format(t, self.tags[t]))
         return ''.join(res)
@@ -42,8 +42,8 @@ class Way(object):
         self.nodes.append(nodeid)
 
     def __str__(self):
-        res = ['Way {0}: '.format(self._id)]
-        res.append(', '.join(self.nodes))
+        res = ['Way {0}:\n\tnodes:'.format(self._id)]
+        res.append(', '.join(map(lambda x: str(x), self.nodes)))
         res.append('\n')
         for t in self.tags.keys():
             res.append('\t{0} = {1}\n'.format(t, self.tags[t]))
@@ -56,7 +56,7 @@ class Member(object):
         self.role = role
 
     def __str__(self):
-        return 'Member {0}, {1}, {2}\n'.format(self.type, self.ref, self.role)
+        return 'Member {0}, {1}, {2}'.format(self.type, self.ref, self.role)
 
 class Relation(object):
     def __init__(self, id = 0):
@@ -75,9 +75,9 @@ class Relation(object):
         self.members.append(member)
 
     def __str__(self):
-        res = ['Relation {0}:\n'.format(self._id)]
-        res.append(', '.join(self.members))
-        return res
+        res = ['Relation {0}:\n\t'.format(self._id)]
+        res.append('\n\t'.join(map(lambda x: str(x), self.members)))
+        return ''.join(res)
 
 
 

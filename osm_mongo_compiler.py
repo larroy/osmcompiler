@@ -4,7 +4,6 @@ import sys
 import os
 import optparse
 
-
 sys.path.append('minimongo')
 
 # load mongodb credentials
@@ -16,18 +15,103 @@ import osm
 import osm.compiler
 import osm.factory
 import osm.sink
+import re
+import unittest
 
+def mongo_legal_key_escape(s):
+    '''Make sure a string is a legal mongo key name, substitute unsafe characters'''
+    l = []
+    for c in s:
+        if c == '%':
+            l.append('%%')
+
+        elif c == '~':
+            l.append('~~')
+
+        elif c == '^':
+            l.append('^^')
+
+        elif c == '$':
+            l.append('%~')
+
+        elif c == '.':
+            l.append('%^')
+
+        else:
+            l.append(c)
+    return ''.join(l)
+
+def mongo_legal_key_unscape(s):
+    l = []
+    skipnext = False
+    for (i,cur) in enumerate(s):
+        next = None
+        if skipnext:
+            skipnext = False
+            continue
+
+        if i+1 < len(s):
+            next = s[i+1]
+        if cur == '%':
+            if next:
+                if next == '~':
+                    l.append('$')
+                    skipnext = True
+
+                elif next == '%':
+                    l.append('%')
+                    skipnext = True
+
+                elif next  == '^':
+                    l.append('.')
+                    skipnext = True
+
+                else:
+                    raise RuntimeError('unscaping unscaped string')
+
+        elif cur == '~':
+            if next:
+                if next == '~':
+                    l.append('~')
+                    skipnext = True
+
+                else:
+                    raise RuntimeError('unscaping unscaped string')
+
+        elif cur == '^':
+            if next:
+                if next == '^':
+                    l.append('^')
+                    skipnext = True
+
+                else:
+                    raise RuntimeError('unscaping unscaped string')
+
+        else:
+            l.append(cur)
+
+    return ''.join(l)
+
+
+class TestEscape(unittest.TestCase):
+    def test_all(self):
+        a = '$  pa $$ $  go %~ %% ~~ ~ %~%~  . .%^ %^^^^^'
+        e = mongo_legal_key_escape(a)
+        k = mongo_legal_key_unscape(e)
+        self.assertEqual(a,k)
 
 class Node(osm.Node, minimongo.Model):
+    def addTag(self, k,v):
+        k = mongo_legal_key_escape(k)
+        super(Node, self).addTag(k, v)
+
+class Way(osm.Way, minimongo.Model):
     pass
 
-class Way(osm.Node, minimongo.Model):
+class Relation(osm.Relation, minimongo.Model):
     pass
 
-class Relation(osm.Node, minimongo.Model):
-    pass
-
-class Member(osm.Node, minimongo.Model):
+class Member(osm.Member, minimongo.Model):
     pass
 
 class MongoOSMFactory(osm.factory.OSMFactory):
@@ -44,21 +128,32 @@ class MongoOSMFactory(osm.factory.OSMFactory):
         return Member(typ, id, role)
 
 class MongoOSMSink(osm.sink.OSMSink):
+    def __init__(self, verbose=0):
+        self.verbose = verbose
+
     def processNode(self, node):
+        if self.verbose:
+            print node
         node.save()
 
     def processWay(self, way):
+        if self.verbose:
+            print way
         way.save()
 
     def processRelation(self, rel):
+        if self.verbose:
+            print rel
         rel.save()
 
     def processMember(self, member):
+        if self.verbose:
+            print member
         member.save()
 
 
 def main():
-    parser = optparse.OptionParser(usage="%prog [options] osm_dump_file", version="%prog 0.2")
+    parser = optparse.OptionParser(usage = "%prog [options] osm_dump_file.pbf", version = "%prog 0.2")
     parser.add_option(
         "-q",
         "--quiet",
@@ -83,32 +178,54 @@ def main():
         type = 'int',
         help = "parse count blocks")
 
+    parser.add_option(
+        "-t",
+        "--test",
+        dest = "test",
+        default = 0,
+        type = int,
+        help = "run tests")
+
+    parser.add_option(
+        "-p",
+        "--print",
+        dest = "prnt",
+        default = 0,
+        type = int,
+        help = "print objects to stdout as they are processed")
 
 
 
     (options, args) = parser.parse_args()
 
-    if len(args) != 1 :
-        print "You must enter the binary filename (*.pbf)"
-        sys.exit(1)
+    if options.test:
+        suite = unittest.TestLoader().loadTestsFromTestCase(TestEscape)
+        unittest.TextTestRunner(verbosity=2).run(suite)
+        return 0
+
+    if len(args) != 1:
+        print "error: missing OSM dump file argument, run with --help option for help"
+        return 1
 
     pbf_file = args[0]
 
-    if  not os.path.exists(pbf_file) :
+    if not os.path.exists(pbf_file):
         sys.stderr.write('error: file {0} not found.\n'.format(pbf_file))
-        sys.exit(1)
-
-    if options.verbose :
-        print "Loading:", pbf_file
-
-    fpbf = open(pbf_file, "rb")
-    parser = osm.compiler.OSMCompiler(fpbf, MongoOSMSink(), MongoOSMFactory(), options.verbose)
-    parser.parse(options.frm, options.count)
-    fpbf.close()
+        return 1
 
     if options.verbose:
-        for (k,v) in parser.count.items():
-            print '{1} {0}'.format(k,v)
+        print "Loading:", pbf_file
+
+    with open(pbf_file, "rb") as fpbf:
+        parser = osm.compiler.OSMCompiler(fpbf, MongoOSMSink(options.prnt), MongoOSMFactory(), options.verbose)
+        parser.parse(options.frm, options.count)
+        if options.verbose:
+            for (k,v) in parser.count.items():
+                print '{1} {0}'.format(k,v)
+
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
+
+
