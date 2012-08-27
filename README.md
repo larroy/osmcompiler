@@ -5,7 +5,17 @@ This is a framework to process OSM data dumps in PBF format.
 
 There's an included backend to store data in mongodb, to implement a new backend it's very simple, just implement osm.sink which does an action on the processed entities and osm.factory which creates the instances of OSM entitities. Then call the parser with your implementations of sink and factory.
 
+
+Boot
+----
+Initialize the submodules:
+
+    git submodule init
+    git submodule update
+
 Usage:
+-----
+
 
 <pre>
 ./osm_mongo_compiler.py spain.osm.pbf 
