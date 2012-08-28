@@ -14,7 +14,7 @@ Initialize the submodules:
     git submodule update
 
 Usage:
------
+------
 
 
 <pre>
@@ -26,6 +26,10 @@ Bounding Box: (-9.779014,35.91539) (5.098525,44.14855)
 </pre>
 
 
+MapReduce
+---------
+
+By running with -f and -c options the file can be devided in ranges and thus processing be done in a map kind of job across several processors or nodes.
 
 Credits
 -------
