@@ -13,10 +13,14 @@ class Node(object):
         self.uid = 0
         self.user = ""
         self.changeset = 0
-        self.tags = {}
 
     def addTag(self, k, v):
-        self.tags[k] = v
+        try:
+            self.tags[k] = v
+        except AttributeError:
+            self.tags = {}
+            self.tags[k] = v
+
 
     def __str__(self):
         res = []
