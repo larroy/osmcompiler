@@ -183,8 +183,8 @@ def main():
         "-c",
         "--count",
         dest = "count",
-        default = -1,
-        type = 'int',
+        default = None,
+        type = 'string',
         help = "show the number of data blocks (total- 1(header)")
 
 

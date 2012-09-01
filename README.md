@@ -34,7 +34,14 @@ Bounding Box: (-9.779014,35.91539) (5.098525,44.14855)
 MapReduce
 ---------
 
-By running with -f and -c options the file can be devided in ranges and thus processing be done in a map kind of job across several processors or nodes.
+Count the number of data blocks with:
+./osm_mongo_compiler.py file --count yes
+
+By running with -f and -n options the file can be devided in ranges and thus processing be done in a map kind of job across several processors or nodes.
+./osm_mongo_compiler.py file -f 0 -n 1000
+./osm_mongo_compiler.py file -f 1000 -n 1000
+...
+etc
 
 Credits
 -------
