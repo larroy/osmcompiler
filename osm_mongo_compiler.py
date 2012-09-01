@@ -106,12 +106,21 @@ class Node(osm.Node, minimongo.Model):
         super(Node, self).addTag(k, v)
 
 class Way(osm.Way, minimongo.Model):
+    def addTag(self, k,v):
+        k = mongo_legal_key_escape(k)
+        super(Way, self).addTag(k, v)
     pass
 
 class Relation(osm.Relation, minimongo.Model):
+    def addTag(self, k,v):
+        k = mongo_legal_key_escape(k)
+        super(Relation, self).addTag(k, v)
     pass
 
 class Member(osm.Member, minimongo.Model):
+    def addTag(self, k,v):
+        k = mongo_legal_key_escape(k)
+        super(Member, self).addTag(k, v)
     pass
 
 class MongoOSMFactory(osm.factory.OSMFactory):
