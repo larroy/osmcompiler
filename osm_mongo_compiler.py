@@ -185,7 +185,16 @@ def main():
         dest = "count",
         default = -1,
         type = 'int',
-        help = "parse count blocks")
+        help = "show the number of data blocks (total- 1(header)")
+
+
+    parser.add_option(
+        "-n",
+        "--num",
+        dest = "num",
+        default = -1,
+        type = 'int',
+        help = "parse num blocks")
 
     parser.add_option(
         "-t",
@@ -225,9 +234,16 @@ def main():
     if options.verbose:
         print "Loading:", pbf_file
 
+    if options.count > 0:
+        with open(pbf_file, "rb") as fpbf:
+            parser = osm.compiler.OSMCompiler(fpbf, MongoOSMSink(options.prnt), MongoOSMFactory(), options.verbose)
+            print "Number of data blobs: ", parser.numDataBlobs()
+        return 0
+
+
     with open(pbf_file, "rb") as fpbf:
         parser = osm.compiler.OSMCompiler(fpbf, MongoOSMSink(options.prnt), MongoOSMFactory(), options.verbose)
-        parser.parse(options.frm, options.count)
+        parser.parse(options.frm, options.num)
         if options.verbose:
             for (k,v) in parser.count.items():
                 print '{1} {0}'.format(k,v)
