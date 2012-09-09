@@ -2,13 +2,13 @@ import os
 import datetime
 import sys
 
-def est_finish(started, total, done):
+def est_finish(started, done, total):
     '''Return a datetime object estimating date of finishing. @param started is a datetime object when the job started, @param done is the number of currently done elements and @total is the remaining elements to do work on.'''
     assert(done <= total)
     if not total or total <= 0 or done <= 0:
         return ' -- '
     delta = datetime.datetime.now() - started
-    remaining = (done / delta.total_seconds()) * (total - done)
+    remaining = (delta.total_seconds() * (total - done)) / float(done)
     res = datetime.datetime.now() + datetime.timedelta(seconds=remaining)
     return res.strftime('%Y-%m-%d %H:%M')
 

@@ -141,7 +141,7 @@ class OSMCompiler:
                 l = []
                 for (k,v) in self.count.items():
                     l.append('{1} K {0} '.format(k, v // 1000))
-                msg = '{0}/{1} blocks. '.format(nblob, count) + ' '.join(l) + pbar.est_finish(start, count, nblob)
+                msg = '{0}/{1} blocks. '.format(nblob, count) + ' '.join(l) + pbar.est_finish(start, nblob, count)
                 progress(nblob, msg)
 
 
