@@ -1,0 +1,3 @@
+mongo osm_globe --eval 'db.way.find().forEach(function(obj){ printjson(obj["_id"]); printjson(obj["tags"]); printjson(obj["nodes"gth); print("-------------"); } )' |less
+
+db.way.find({"tags.name": /Ebro/})
