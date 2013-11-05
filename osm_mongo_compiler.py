@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-import optparse
+import argparse
 
 sys.path.append('minimongo')
 
@@ -159,8 +159,8 @@ class MongoOSMSink(osm.sink.OSMSink):
 
 
 def main():
-    parser = optparse.OptionParser(usage = "%prog [options] osm_dump_file.pbf", version = "%prog 0.2")
-    parser.add_option(
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
         "-q",
         "--quiet",
         action = "store_false",
@@ -168,32 +168,30 @@ def main():
         default = True,
         help = "don't print status messages to stdout")
 
-    parser.add_option(
+    parser.add_argument(
         "-f",
         "--from",
         dest = "frm",
         default = 0,
-        type = 'int',
+        type = int,
         help = "parse from this block onwards")
 
-    parser.add_option(
+    parser.add_argument(
         "-c",
         "--count",
-        dest = "count",
-        default = None,
-        type = 'string',
-        help = "show the number of data blocks (total- 1(header)")
+        action = 'store_true',
+        help = "show the number of data blocks (total - 1 (header))")
 
 
-    parser.add_option(
+    parser.add_argument(
         "-n",
         "--num",
         dest = "num",
         default = -1,
-        type = 'int',
+        type = int,
         help = "parse num blocks")
 
-    parser.add_option(
+    parser.add_argument(
         "-t",
         "--test",
         dest = "test",
@@ -201,7 +199,7 @@ def main():
         type = int,
         help = "run tests")
 
-    parser.add_option(
+    parser.add_argument(
         "-p",
         "--print",
         dest = "prnt",
@@ -210,19 +208,18 @@ def main():
         help = "print objects to stdout as they are processed")
 
 
+    parser.add_argument('file')
 
-    (options, args) = parser.parse_args()
+
+    options = parser.parse_args()
+
 
     if options.test:
         suite = unittest.TestLoader().loadTestsFromTestCase(TestEscape)
         unittest.TextTestRunner(verbosity=2).run(suite)
         return 0
 
-    if len(args) != 1:
-        print "error: missing OSM dump file argument, run with --help option for help"
-        return 1
-
-    pbf_file = args[0]
+    pbf_file = options.file
 
     if not os.path.exists(pbf_file):
         sys.stderr.write('error: file {0} not found.\n'.format(pbf_file))
