@@ -2,8 +2,9 @@ import os
 import datetime
 import sys
 
+
 def est_finish(started, done, total):
-    '''Return a datetime object estimating date of finishing. @param started is a datetime object when the job started, @param done is the number of currently done elements and @total is the remaining elements to do work on.'''
+    '''Return a string estimating date of finishing. @param started is a datetime object when the job started, @param done is the number of currently done elements and @total is the remaining elements to do work on.'''
     assert(done <= total)
     if not total or total <= 0 or done <= 0:
         return ' -- '
@@ -12,13 +13,13 @@ def est_finish(started, done, total):
     res = datetime.datetime.now() + datetime.timedelta(seconds=remaining)
     return res.strftime('%Y-%m-%d %H:%M')
 
-def getTerminalSize():
+
+def get_terminal_size():
     '''returns terminal size as a tuple (x,y)'''
     def ioctl_GWINSZ(fd):
         try:
             import fcntl, termios, struct
-            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-        '1234'))
+            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
         except:
             return None
         return cr
@@ -35,9 +36,9 @@ def getTerminalSize():
     return int(cr[1]), int(cr[0])
 
 
-
 class ProgressBar:
-    def __init__(self, minValue = 0, maxValue = 10, totalWidth=getTerminalSize()[0]):
+
+    def __init__(self, minValue = 0, maxValue = 10, totalWidth = get_terminal_size()[0]):
         self.progBar = "[]"   # This holds the progress bar string
         self.min = int(minValue)
         self.max = int(maxValue)
@@ -46,10 +47,14 @@ class ProgressBar:
         self.done = 0
         self.percentDone_last = -1
         self.percentDone = 0
-        self.updateAmount(0)  # Build progress bar string
+        self.update_amount(0)  # Build progress bar string
         self.lastMsg = ''
 
-    def updateAmount(self, done = 0, msg=''):
+    def set_max(self, max_):
+        self.max = int(max_)
+        self.span = self.max - self.min
+
+    def update_amount(self, done = 0, msg=''):
         if done < self.min:
             done = self.min
 
@@ -78,11 +83,9 @@ class ProgressBar:
 
         # figure out where to put the percentage, roughly centered
         if not msg:
-            percentString = str(self.percentDone) + "%"
+            percentString = ' {0}% '.format(str(self.percentDone))
         else:
-            percentString = str(self.percentDone) + "%" + ' ' + msg
-
-        percentString = '{0}% {1}'.format(str(self.percentDone),msg)
+            percentString = ' {0}% {1} '.format(str(self.percentDone), msg)
 
         percentPlace = len(self.progBar)//2 - len(percentString)//2
         if percentPlace < 0:
@@ -92,8 +95,10 @@ class ProgressBar:
         self.progBar = self.progBar[0:percentPlace] + percentString[:allFull] + self.progBar[percentPlace+len(percentString):]
         return True
 
-    def __call__(self, amt, msg='', force=False):
-        if self.updateAmount(amt, msg):
+    def __call__(self, amt = -1, msg = '', force = False):
+        if amt == -1:
+            amt = self.done + 1
+        if self.update_amount(amt, msg) or force:
             sys.stdout.write(str(self))
             if sys.stdout.isatty():
                 sys.stdout.write("\r")
@@ -101,8 +106,16 @@ class ProgressBar:
                 sys.stdout.write("\n")
             sys.stdout.flush()
 
-
     def __str__(self):
         return str(self.progBar)
 
+    # Support for the 'with' statement, to always include a newline
+    # when the object is destroyed
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if sys.stdout.isatty():
+            sys.stdout.write("\n")
+            sys.stdout.flush()
